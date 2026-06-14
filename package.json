@@ -1,6 +1,6 @@
 {
   "name": "mdtext",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "AI Mark - AI 资讯 Markdown 编辑器的 Electron 桌面版",
   "main": "electron/main.cjs",
   "scripts": {

@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -28,7 +29,7 @@ jobs:
         run: npm ci
 
       - name: Build Windows app
-        run: npm run dist
+        run: npm run dist -- --publish never
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
