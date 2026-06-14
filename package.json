@@ -1,0 +1,55 @@
+{
+  "name": "mdtext",
+  "version": "1.0.0",
+  "description": "AI Mark - AI 资讯 Markdown 编辑器的 Electron 桌面版",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder --win nsis portable"
+  },
+  "keywords": [
+    "markdown",
+    "electron",
+    "editor",
+    "ai"
+  ],
+  "author": "s84zzd",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^32.3.3",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.s84zzd.mdtext",
+    "productName": "AI Mark",
+    "electronDownload": {
+      "mirror": "https://npmmirror.com/mirrors/electron/"
+    },
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "index.html",
+      "scripts/**/*",
+      "styles/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "artifactName": "${productName}-${version}-${arch}.${ext}",
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "AI Mark"
+    }
+  }
+}

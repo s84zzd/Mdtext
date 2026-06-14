@@ -4,6 +4,8 @@
 
 > 无需构建工具，直接在浏览器中打开即可使用。
 
+同时仓库也提供 **Electron 桌面封装**，可生成并发布 Windows 可执行版本。
+
 ## 功能特性
 
 ### 核心编辑
@@ -55,6 +57,39 @@ python3 -m http.server 8080
 # 然后访问 http://localhost:8080
 ```
 
+## Windows 桌面版构建
+
+### 本地启动 Electron
+
+```bash
+npm install
+npm start
+```
+
+### 本地打包
+
+```bash
+# 当前平台生成未安装目录包（用于验证配置）
+npm run pack
+
+# 在 Windows 环境生成安装包与 portable 可执行文件
+npm run dist
+```
+
+### 自动发布到 GitHub Release
+
+仓库内置了 **GitHub Actions** 发布流程：当推送 `v*` 版本标签时，会自动在 `windows-latest` 上构建并发布 Windows 安装包。
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+发布完成后，可在 GitHub 仓库的 **Releases** 页面下载：
+
+- NSIS 安装包 `.exe`
+- Portable 便携版 `.exe`
+
 ## 快捷键
 
 | 快捷键 | 功能 |
@@ -72,7 +107,12 @@ python3 -m http.server 8080
 
 ```
 .
+├── electron/
+│   └── main.cjs         # Electron 主进程
+├── .github/workflows/
+│   └── release.yml      # Windows 打包与发布
 ├── index.html          # 应用入口
+├── package.json        # Electron/打包配置
 ├── styles/
 │   └── main.css        # 界面样式
 ├── scripts/
