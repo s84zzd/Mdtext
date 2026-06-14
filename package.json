@@ -1,12 +1,14 @@
 {
   "name": "mdtext",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "AI Mark - AI 资讯 Markdown 编辑器的 Electron 桌面版",
   "main": "electron/main.cjs",
   "scripts": {
     "start": "electron .",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder --win nsis portable"
+    "dist": "npm run dist:win",
+    "dist:win": "electron-builder --win nsis portable",
+    "dist:mac": "electron-builder --mac dmg zip"
   },
   "keywords": [
     "markdown",
@@ -42,7 +44,13 @@
         "portable"
       ]
     },
-    "artifactName": "${productName}-${version}-${arch}.${ext}",
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
     "nsis": {
       "oneClick": false,
       "perMachine": false,

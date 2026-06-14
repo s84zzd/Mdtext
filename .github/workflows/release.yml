@@ -1,4 +1,4 @@
-name: Release Windows App
+name: Release Desktop App
 
 on:
   push:
@@ -29,22 +29,69 @@ jobs:
         run: npm ci
 
       - name: Build Windows app
-        run: npm run dist -- --publish never
+        run: npm run dist:win -- --publish never
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: windows-release
+          name: windows-release-assets
           path: |
             release/*.exe
             release/*.yml
             release/*.blockmap
 
+  build-macos:
+    runs-on: macos-latest
+    env:
+      ELECTRON_BUILDER_BINARIES_MIRROR: https://npmmirror.com/mirrors/electron-builder-binaries/
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build macOS app
+        run: npm run dist:mac -- --publish never
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-release-assets
+          path: |
+            release/*.dmg
+            release/*.zip
+            release/*.blockmap
+            release/latest-mac.yml
+
+  publish-release:
+    runs-on: ubuntu-latest
+    needs:
+      - build-windows
+      - build-macos
+
+    steps:
+      - name: Download packaged artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: "*-release-assets"
+          merge-multiple: true
+          path: release-assets
+
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            release/*.exe
-            release/*.yml
-            release/*.blockmap
+            release-assets/*.exe
+            release-assets/*.yml
+            release-assets/*.dmg
+            release-assets/*.zip
+            release-assets/*.blockmap
           generate_release_notes: true

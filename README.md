@@ -57,7 +57,7 @@ python3 -m http.server 8080
 # 然后访问 http://localhost:8080
 ```
 
-## Windows 桌面版构建
+## 桌面版构建
 
 ### 本地启动 Electron
 
@@ -73,12 +73,15 @@ npm start
 npm run pack
 
 # 在 Windows 环境生成安装包与 portable 可执行文件
-npm run dist
+npm run dist:win
+
+# 在 macOS 环境生成 dmg / zip
+npm run dist:mac
 ```
 
 ### 自动发布到 GitHub Release
 
-仓库内置了 **GitHub Actions** 发布流程：当推送 `v*` 版本标签时，会自动在 `windows-latest` 上构建并发布 Windows 安装包。
+仓库内置了 **GitHub Actions** 发布流程：当推送 `v*` 版本标签时，会自动构建并发布 Windows 与 macOS 桌面版本。
 
 ```bash
 git tag v1.0.0
@@ -89,6 +92,8 @@ git push origin v1.0.0
 
 - NSIS 安装包 `.exe`
 - Portable 便携版 `.exe`
+- macOS 安装包 `.dmg`
+- macOS 压缩包 `.zip`
 
 ## 快捷键
 
@@ -110,7 +115,7 @@ git push origin v1.0.0
 ├── electron/
 │   └── main.cjs         # Electron 主进程
 ├── .github/workflows/
-│   └── release.yml      # Windows 打包与发布
+│   └── release.yml      # Windows / macOS 打包与发布
 ├── index.html          # 应用入口
 ├── package.json        # Electron/打包配置
 ├── styles/
