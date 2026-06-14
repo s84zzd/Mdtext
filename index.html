@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Mark — AI 资讯 Markdown 编辑器</title>
+
+  <!-- Marked.js -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- KaTeX -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  <!-- Highlight.js -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css" id="hljs-theme" />
+  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script>
+  <!-- DOMPurify -->
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+
+  <!-- 离线/弱网降级（CDN 失败时提供基础能力） -->
+  <script src="scripts/fallback.js"></script>
+
+  <link rel="stylesheet" href="styles/main.css" />
+</head>
+<body data-theme="light">
+  <div id="app">
+    <!-- 顶部工具栏 -->
+    <header class="toolbar" id="toolbar">
+      <div class="toolbar-group">
+        <button class="tool-btn" id="btn-new" title="新建 (Ctrl+N)">📝 新建</button>
+        <button class="tool-btn" id="btn-open" title="打开 (Ctrl+O)">📂 打开</button>
+        <button class="tool-btn" id="btn-save" title="保存 (Ctrl+S)">💾 保存</button>
+      </div>
+
+      <div class="toolbar-divider"></div>
+
+      <div class="toolbar-group">
+        <button class="tool-btn" data-cmd="bold" title="加粗 (Ctrl+B)"><b>B</b></button>
+        <button class="tool-btn" data-cmd="italic" title="斜体 (Ctrl+I)"><i>I</i></button>
+        <button class="tool-btn" data-cmd="strike" title="删除线">S̶</button>
+        <button class="tool-btn" data-cmd="code" title="行内代码">` `</button>
+        <button class="tool-btn" data-cmd="link" title="链接">🔗</button>
+        <button class="tool-btn" data-cmd="image" title="图片">🖼️</button>
+        <button class="tool-btn" data-cmd="quote" title="引用">" "</button>
+        <button class="tool-btn" data-cmd="ul" title="无序列表">• 列表</button>
+        <button class="tool-btn" data-cmd="ol" title="有序列表">1. 列表</button>
+        <button class="tool-btn" data-cmd="task" title="任务列表">☑ 任务</button>
+        <button class="tool-btn" data-cmd="table" title="表格">▦ 表格</button>
+        <button class="tool-btn" data-cmd="hr" title="分隔线">—</button>
+      </div>
+
+      <div class="toolbar-divider"></div>
+
+      <div class="toolbar-group">
+        <button class="tool-btn" id="btn-ai-paste" title="AI 智能粘贴 (Ctrl+Shift+V)">🤖 AI 粘贴</button>
+        <button class="tool-btn" id="btn-clean" title="清洗 AI 内容">🧹 清洗</button>
+        <button class="tool-btn" id="btn-reading" title="阅读模式 (Ctrl+Shift+R)">👁️ 阅读</button>
+      </div>
+
+      <div class="toolbar-divider"></div>
+
+      <div class="toolbar-group ai-actions">
+        <button class="tool-btn ai-action" data-ai="continue" title="AI 续写">✍️ 续写</button>
+        <button class="tool-btn ai-action" data-ai="polish" title="AI 润色">✨ 润色</button>
+        <button class="tool-btn ai-action" data-ai="summarize" title="AI 总结">📋 总结</button>
+        <button class="tool-btn ai-action" data-ai="translate" title="AI 翻译">🌐 翻译</button>
+        <button class="tool-btn ai-action" data-ai="fix" title="AI 纠错">🔧 纠错</button>
+        <button class="tool-btn ai-action" data-ai="format" title="AI 格式化">📐 格式化</button>
+      </div>
+
+      <div class="toolbar-divider"></div>
+
+      <div class="toolbar-group">
+        <button class="tool-btn" id="btn-ai-config" title="AI API 设置">⚙️ API</button>
+        <button class="tool-btn" id="btn-theme" title="切换主题">🌓 主题</button>
+        <button class="tool-btn" id="btn-export-md" title="导出 Markdown">⬇️ MD</button>
+        <button class="tool-btn" id="btn-export-html" title="导出 HTML">⬇️ HTML</button>
+      </div>
+
+      <div class="toolbar-spacer"></div>
+
+      <div class="toolbar-group stats" id="stats">
+        <span id="stat-words">0 词</span>
+        <span id="stat-chars">0 字</span>
+        <span id="stat-tokens">~0 tokens</span>
+      </div>
+    </header>
+
+    <!-- 主体区域 -->
+    <div class="main" id="main">
+      <!-- 侧边栏：大纲 -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <span>📋 大纲</span>
+          <button class="icon-btn" id="btn-toggle-sidebar" title="收起/展开">◀</button>
+        </div>
+        <div class="outline" id="outline"></div>
+      </aside>
+
+      <!-- 编辑器区 -->
+      <section class="editor-pane" id="editor-pane">
+        <div class="editor-wrapper">
+          <div class="line-numbers" id="line-numbers">1</div>
+          <textarea
+            id="editor"
+            class="editor"
+            spellcheck="false"
+            placeholder="在此输入或粘贴 Markdown...&#10;使用 Ctrl+Shift+V 进行 AI 智能粘贴"
+          ></textarea>
+        </div>
+      </section>
+
+      <!-- 预览区 -->
+      <section class="preview-pane" id="preview-pane">
+        <div class="preview-header">
+          <span>预览</span>
+          <button class="icon-btn" id="btn-sync-scroll" title="同步滚动">🔒</button>
+        </div>
+        <article class="markdown-body" id="preview"></article>
+      </section>
+    </div>
+
+    <!-- 底部状态栏 -->
+    <footer class="statusbar" id="statusbar">
+      <span id="status-file">未命名.md</span>
+      <span id="status-saved">已自动保存</span>
+      <span id="status-mode">编辑模式</span>
+    </footer>
+  </div>
+
+  <!-- 隐藏的输入框 -->
+  <input type="file" id="file-input" accept=".md,.markdown,.txt,.text" hidden />
+
+  <!-- AI 生成/输出面板 -->
+  <div class="ai-panel" id="ai-panel">
+    <div class="ai-panel-header">
+      <span id="ai-panel-title">🤖 AI 助手</span>
+      <div class="ai-panel-actions">
+        <button class="icon-btn" id="btn-ai-panel-copy" title="复制全部">📋</button>
+        <button class="icon-btn" id="btn-ai-panel-insert" title="插入到编辑器">⬇️</button>
+        <button class="icon-btn" id="btn-ai-panel-close" title="关闭">✕</button>
+      </div>
+    </div>
+    <div class="ai-panel-body" id="ai-panel-body">
+      <div class="ai-panel-empty">选择一段文字并点击工具栏的 AI 功能，即可调用大模型进行续写、润色、总结等操作。</div>
+    </div>
+    <div class="ai-panel-footer">
+      <span id="ai-panel-status">就绪</span>
+      <button class="btn-secondary" id="btn-ai-panel-cancel" style="display:none">停止</button>
+    </div>
+  </div>
+
+  <!-- AI API 设置对话框 -->
+  <div class="modal-overlay" id="ai-config-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>⚙️ AI API 设置</h3>
+        <button class="icon-btn close-btn" id="btn-close-ai-config">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>服务商预设</label>
+          <select id="ai-provider" class="form-control">
+            <option value="kimi">Kimi（Moonshot）</option>
+            <option value="deepseek">DeepSeek</option>
+            <option value="qwen">通义千问</option>
+            <option value="openai">OpenAI</option>
+            <option value="custom">自定义</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>API Base URL</label>
+          <input type="text" id="ai-base-url" class="form-control" placeholder="https://api.moonshot.cn/v1" />
+        </div>
+        <div class="form-group">
+          <label>API Key</label>
+          <input type="password" id="ai-api-key" class="form-control" placeholder="sk-..." />
+          <p class="form-tip">密钥仅保存在浏览器本地存储中，请妥善保管。</p>
+        </div>
+        <div class="form-group">
+          <label>模型</label>
+          <input type="text" id="ai-model" class="form-control" list="ai-model-list" placeholder="kimi-k2-6" />
+          <datalist id="ai-model-list"></datalist>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Temperature</label>
+            <input type="number" id="ai-temperature" class="form-control" min="0" max="2" step="0.1" value="0.6" />
+          </div>
+          <div class="form-group">
+            <label>Max Tokens</label>
+            <input type="number" id="ai-max-tokens" class="form-control" min="1" max="8192" step="1" value="4096" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="inline-label"><input type="checkbox" id="ai-stream" checked /> 使用流式响应</label>
+        </div>
+        <div class="form-group">
+          <label>自定义系统提示（可选）</label>
+          <textarea id="ai-system-prompt" class="form-control" rows="3" placeholder="为空则使用各功能默认提示词"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="btn-ai-config-cancel">取消</button>
+        <button class="btn-primary" id="btn-ai-config-save">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI 粘贴对话框 -->
+  <div class="modal-overlay" id="ai-paste-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>🤖 AI 智能粘贴</h3>
+        <button class="icon-btn close-btn" id="btn-close-ai-paste">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-tip">从 ChatGPT、Claude、Kimi 等 AI 对话页面复制的内容，可直接粘贴到下方。我们会自动清洗格式、提取代码块、规范化标题层级。</p>
+        <textarea id="ai-paste-area" placeholder="按 Ctrl+V 粘贴 AI 内容..."></textarea>
+        <div class="modal-options">
+          <label><input type="checkbox" id="opt-remove-copy-btns" checked /> 移除“复制代码”按钮残留</label>
+          <label><input type="checkbox" id="opt-normalize-headings" checked /> 规范标题层级</label>
+          <label><input type="checkbox" id="opt-convert-tables" checked /> 识别并转换表格</label>
+          <label><input type="checkbox" id="opt-fix-code-lang" checked /> 修复代码块语言标识</label>
+          <label><input type="checkbox" id="opt-merge-lines" checked /> 合并错误换行</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="btn-ai-paste-cancel">取消</button>
+        <button class="btn-primary" id="btn-ai-paste-confirm">插入到编辑器</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 提示条 -->
+  <div class="toast" id="toast"></div>
+
+  <script src="scripts/ai-api.js"></script>
+  <script src="scripts/ai-paste.js"></script>
+  <script src="scripts/main.js"></script>
+</body>
+</html>
